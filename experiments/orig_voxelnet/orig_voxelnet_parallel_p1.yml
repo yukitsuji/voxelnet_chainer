@@ -1,12 +1,12 @@
 end_trigger: [450, "epoch"] # 3200 / 16 = 200 * 150 = 30000
 results: results
-gpus: [0, 1, 2, 3]
+gpus: [0, 1, 2, 3, 4, 5, 6, 7]
 mode: Train
 seed: 1
 
 model:
   module: voxelnet.models.light_voxelnet
-  name: LightVoxelnet
+  name: OrigVoxelnet
   pretrained_model:
     path:
     download:
@@ -61,14 +61,14 @@ dataset:
       anchor_center: [-1.0, 0., 0.]
 
 updater:
-  name: MultiprocessParallelUpdater
+  name: ParallelUpdater #MultiprocessParallelUpdater
 
 iterator:
   name: MultiprocessIterator
-  train_batchsize: 2
+  train_batchsize: 16
   test_batchsize: 2
   args:
-    n_processes: 2
+    n_processes: 4
     n_prefetch: 1
     shared_mem: 60000000
 
@@ -84,10 +84,8 @@ extension:
   #Evaluator:
   #  name: Evaluator
   #  trigger: [1, 'epoch']
-  snapshot:
-      trigger: [150, "epoch"]
   snapshot_object:
-      trigger: [10, "epoch"]
+      trigger: [150, "epoch"]
   LogReport:
     trigger: [1, "epoch"]
   PrintReport:

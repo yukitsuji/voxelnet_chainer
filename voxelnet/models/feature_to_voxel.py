@@ -61,7 +61,7 @@ class FeatureToVoxel(ParentClass):
 
     def backward(self, x, gy):
         out = gy[0]
-        out.data[:, :, 0, 0, 0] = 0
+        # out.data[:, :, 0, 0, 0] = 0
         out = out[self.batch_indexes, :, self.d_indexes, self.h_indexes, self.w_indexes]
         return out,
         # return gy[0][self.batch_indexes, :, self.d_indexes, self.h_indexes, self.w_indexes],
