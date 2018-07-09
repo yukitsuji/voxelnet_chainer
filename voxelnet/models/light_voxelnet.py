@@ -46,19 +46,20 @@ class BasicModel(chainer.Chain):
            Return:
                loss (Variable).
         """
-        x = self.feature_net(x)
-        x = feature_to_voxel(x, indexes, self.k, self.d, self.h, self.w, batch)
-        x = self.middle_conv(x)
-        pred_prob, pred_reg = self.rpn(x)
-        prob_loss, reg_loss = self.binary_cross_entropy(pred_prob, gt_prob,
-                                                        pred_reg, gt_reg,
-                                                        gt_obj_for_reg,
-                                                        area_mask)
-        total_loss = prob_loss * self.p + reg_loss
-        chainer.report({'loss': total_loss}, self)
-        chainer.report({'prob_loss': prob_loss}, self)
-        chainer.report({'reg_loss': reg_loss}, self)
-        return total_loss
+        with self.xp.cuda.Device(chainer.cuda.get_device_from_array(x)):
+            x = self.feature_net(x)
+            x = feature_to_voxel(x, indexes, self.k, self.d, self.h, self.w, batch)
+            x = self.middle_conv(x)
+            pred_prob, pred_reg = self.rpn(x)
+            prob_loss, reg_loss = self.binary_cross_entropy(pred_prob, gt_prob,
+                                                            pred_reg, gt_reg,
+                                                            gt_obj_for_reg,
+                                                            area_mask)
+            total_loss = prob_loss * self.p + reg_loss
+            chainer.report({'loss': total_loss}, self)
+            chainer.report({'prob_loss': prob_loss}, self)
+            chainer.report({'reg_loss': reg_loss}, self)
+            return total_loss
 
     def binary_cross_entropy(self, pred_prob, gt_prob, pred_reg, gt_reg,
                              gt_obj_for_reg, area_mask):
