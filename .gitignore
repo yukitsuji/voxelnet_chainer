@@ -1,0 +1,15 @@
+tmp.py
+__pycache__/*
+*.c
+*.so
+*.pyc
+*.html
+results
+build
+*_img
+*.caffemodel
+*.npz*
+evaluate_object
+data_util/kitti_util/cython_util/create_feature_input.cpp
+data_util/kitti_util/cython_util/create_input.cpp
+data_util/kitti_util/cython_util/nms.cpp

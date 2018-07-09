@@ -1,0 +1,108 @@
+end_trigger: [150, "epoch"] # 3200 / 16 = 200 * 150 = 30000
+results: results
+gpus: [0]
+mode: Train
+seed: 1
+
+model:
+  module: voxelnet.models.light_voxelnet
+  name: LightVoxelnet_v4
+  pretrained_model:
+    path: 
+    download: 
+  architecture:
+    k: 3
+    d: 10
+    h: 400
+    w: 352
+    alpha: 1.5
+    beta: 1.0
+    p: 1
+
+dataset:
+  train:
+    module: data_util.kitti_util.kitti_3d_transformed
+    name: Kitti3dTransformedDataset
+    args:
+      data_dir: ../../dataset/kitti_detection
+      split: train
+      norm_input: True
+      voxel_shape: [10, 400, 352]
+      resolution: [0.4, 0.2, 0.2]
+      x_range: [0, 70.4]
+      y_range: [-40, 40]
+      z_range: [-3, 1]
+      label_rotate: True
+      g_rotate: [-45, 45]
+      g_scale: [0.95, 1.05]
+      fliplr: True
+      scale_label: 2
+      t: 35
+      thres_t: 0
+      anchor_size: [1.56, 1.6, 3.9]
+      anchor_center: [-1.0, 0., 0.]
+
+  valid:
+    module: data_util.kitti_util.kitti_3d_validation_dataset
+    name: Kitti3dValidationDataset #VoxelnetTransformedDataset
+    args:
+      data_dir: ../../dataset/kitti_detection
+      split: val
+      norm_input: True
+      voxel_shape: [10, 400, 352]
+      resolution: [0.4, 0.2, 0.2]
+      x_range: [0, 70.4]
+      y_range: [-40, 40]
+      z_range: [-3, 1]
+      scale_label: 2
+      t: 35
+      thres_t: 0
+      anchor_size: [1.56, 1.6, 3.9]
+      anchor_center: [-1.0, 0., 0.]
+
+updater:
+  name: StandardUpdater # ParallelUpdater # MultiprocessParallelUpdater
+
+iterator:
+  name: SerialIterator #MultiprocessIterator
+  train_batchsize: 2
+  test_batchsize: 2
+  # args:
+  #   n_processes: 4
+  #   n_prefetch: 1
+    # shared_mem: 400000
+
+optimizer:
+  name: MomentumSGD
+  args:
+    lr: 0.001
+    momentum: 0.9
+  hook:
+    WeightDecay: 0.0002
+
+extension:
+  #Evaluator:
+  #  name: Evaluator
+  #  trigger: [1, 'epoch']
+  snapshot:
+      trigger: [150, "epoch"]
+  snapshot_object:
+      trigger: [10, "epoch"]
+  LogReport:
+    trigger: [1, "epoch"]
+  PrintReport:
+    name:
+      epoch
+      iteration
+      main/loss
+      main/prob_loss
+      main/reg_loss
+      lr
+    trigger: [1, "epoch"]
+  ProgressBar:
+      update_interval: 10
+  observe_lr:
+  PolynomialShift:
+    trigger: [1, 'iteration']
+    args:
+      power: 0.9

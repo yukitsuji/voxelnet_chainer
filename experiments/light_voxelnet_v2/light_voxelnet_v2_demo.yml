@@ -1,0 +1,54 @@
+end_trigger: [150, "epoch"] # 3200 / 16 = 200 * 150 = 30000
+results: results
+gpus: [0]
+mode: Train
+seed: 1
+
+model:
+  module: voxelnet.models.light_voxelnet
+  name: LightVoxelnet_v2
+  pretrained_model:
+    path:
+    download: 
+  architecture:
+    k: 3
+    d: 10
+    h: 400
+    w: 352
+    alpha: 1.5
+    beta: 1.0
+    p: 1
+
+dataset:
+  test:
+    module: data_util.kitti_util.kitti_3d_validation_dataset
+    name: Kitti3dValidationDataset
+    args:
+      data_dir: ../../dataset/kitti_detection #/home/user/.chainer/dataset/pfnet/chainer/kitti_detection
+      split: val
+      ignore_labels: true
+      voxel_shape: [10, 400, 352]
+      resolution: [0.4, 0.2, 0.2]
+      x_range: [0, 70.4]
+      y_range: [-40, 40]
+      z_range: [-3, 1]
+      l_rotate:
+      g_rotate:
+      g_scale:
+      fliplr: False
+      scale_label: 2
+      t: 35
+      thres_t: 0
+      anchor_size: [1.56, 1.6, 3.9]
+      anchor_center: [-1.0, 0., 0.]
+
+updater:
+  name: StandardUpdater # MultiprocessParallelUpdater
+
+iterator:
+  name: SerialIterator
+  test_batchsize: 1
+  # args:
+  #   n_processes: 1
+  #   n_prefetch: 1
+  #   shared_mem: 20000000
