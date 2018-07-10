@@ -26,6 +26,7 @@ from voxelnet.models.feature_to_voxel import feature_to_voxel
 
 from data_util.kitti_util.cython_util.nms_3d import nms_3d
 from voxelnet.models.utils import create_timer, print_timer
+from voxelnet.models.active_bn import BatchNormalization as BN
 
 
 class BasicModel(chainer.Chain):
@@ -276,9 +277,9 @@ class FeatureVoxelNet(chainer.Chain):
             conv1 = L.ConvolutionND(1, 7, 16, 1, nobias=True),
             conv2 = L.ConvolutionND(1, 32, 64, 1, nobias=True),
             conv3 = L.ConvolutionND(1, 128, out_ch, 1, nobias=True),
-            bn1 = L.BatchNormalization(16),
-            bn2 = L.BatchNormalization(64),
-            bn3 = L.BatchNormalization(out_ch))
+	        bn1 = BN(16), #L.BatchNormalization(16),
+	        bn2 = BN(64), #L.BatchNormalization(64),
+	        bn3 = BN(out_ch)) #L.BatchNormalization(out_ch))
 
     def __call__(self, x, *args):
         """
@@ -291,18 +292,25 @@ class FeatureVoxelNet(chainer.Chain):
         """
         n_batch, n_channels, n_points = x.shape
 
+        mask = F.max(x, axis=(1, 2), keepdims=True).data != 0
+        active_length = mask.sum()
+
         # Convolution1D -> BN -> relu -> pool -> concat
-        h = F.relu(self.bn1(self.conv1(x)))
+        h = F.relu(self.bn1(self.conv1(x), active_length))
+        global_feat = F.max_pooling_nd(h, n_points)
+        # Shape is (Batch, channel, points)
+        global_feat_expand = F.tile(global_feat, (1, 1, n_points))
+        h = F.concat((h, global_feat_expand))
+        h *= mask
+
+        h = F.relu(self.bn2(self.conv2(h), active_length))
         global_feat = F.max_pooling_nd(h, n_points)
         global_feat_expand = F.tile(global_feat, (1, 1, n_points))
         h = F.concat((h, global_feat_expand))
+        h *= mask
 
-        h = F.relu(self.bn2(self.conv2(h)))
-        global_feat = F.max_pooling_nd(h, n_points)
-        global_feat_expand = F.tile(global_feat, (1, 1, n_points))
-        h = F.concat((h, global_feat_expand))
-
-        h = F.relu(self.bn3(self.conv3(h)))
+        h = F.relu(self.bn3(self.conv3(h), active_length))
+        h *= mask
         return F.squeeze(F.max_pooling_nd(h, n_points))
 
 
@@ -1020,8 +1028,6 @@ class LightVoxelnet_v7(BasicModel):
             chainer.serializers.load_npz(pretrained_model['path'], self)
 
 
-from voxelnet.models.active_bn import BatchNormalization as BN
-
 class OrigFeatureVoxelNet(chainer.Chain):
 
     """Feature Learning Network"""
@@ -1040,7 +1046,7 @@ class OrigFeatureVoxelNet(chainer.Chain):
            Args:
                x (ndarray): Shape is (Batch * K, 7, t).
                             each set has (xi, yi, zi, ri, xi −vx, yi −vy, zi −vz).
-                            vx, vy, vz is local mean at each voxel.
+                            vx, vy, vz are local mean at each voxel.
            Return:
                y (ndarray): Shape is (Batch * K, 128)
         """
@@ -1055,16 +1061,16 @@ class OrigFeatureVoxelNet(chainer.Chain):
         # Shape is (Batch, channel, points)
         global_feat_expand = F.tile(global_feat, (1, 1, n_points))
         h = F.concat((h, global_feat_expand))
-        # h *= mask
+        h *= mask
 
         h = F.relu(self.bn2(self.conv2(h), active_length))
         global_feat = F.max_pooling_nd(h, n_points)
         global_feat_expand = F.tile(global_feat, (1, 1, n_points))
         h = F.concat((h, global_feat_expand))
-        # h *= mask
+        h *= mask
 
         h = F.relu(self.bn3(self.conv3(h), active_length))
-        # h *= mask
+        h *= mask
         return F.squeeze(F.max_pooling_nd(h, n_points))
 
 

@@ -29,7 +29,7 @@ def _transform(inputs, crop_size=(512, 512), g_scale=[0.95, 1.05],
     rotates = np.pi / 2 - rotates
     rotates = aug_rotate(rotates, 0)
 
-    # Local rotation(Label and local points) # TODO
+    # Local rotation (Label and local points) # TODO
     if l_rotate:
         l_rotate = np.random.uniform(l_rotate[0], l_rotate[1])
 
@@ -84,14 +84,11 @@ def _transform(inputs, crop_size=(512, 512), g_scale=[0.95, 1.05],
     anchor_h, anchor_w, anchor_l = anchor_size
 
     label_creator = create_label_rotate if label_rotate else create_label
-    gt_obj, gt_reg, gt_obj_for_reg = label_creator(
-                                         places, rotates, size,
-                                         d_res, h_res, w_res, t, d, h, w,
-                                         x_min, x_max, y_min, y_max,
-                                         z_min, z_max, thres_t,
-                                         anchor_l, anchor_w, anchor_h,
-                                         anchor_x, anchor_y, anchor_z,
-                                         scale_label, surround_prob)
+    gt_obj, gt_reg, gt_obj_for_reg = \
+        label_creator(places, rotates, size, d_res, h_res, w_res, t, d, h, w,
+                      x_min, x_max, y_min, y_max, z_min, z_max, thres_t,
+                      anchor_l, anchor_w, anchor_h,
+                      anchor_x, anchor_y, anchor_z, scale_label, surround_prob)
     return (feature_input, counter, indexes, gt_obj, gt_reg, gt_obj_for_reg,
              area_mask[None], np.array([indexes.shape[0]]), np.array([n_no_empty]))
 
