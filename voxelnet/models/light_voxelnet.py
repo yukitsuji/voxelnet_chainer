@@ -107,9 +107,9 @@ class BasicModel(chainer.Chain):
         return conf_loss, loc_loss
 
     def decoder(self, pred_reg, anchor, anchor_size, xp=np):
-        pred_reg[:, 0] = pred_reg[:, 0] * anchor_size[0] + anchor[:, 0]
+        pred_reg[:, 0] = pred_reg[:, 0] * anchor_size[2] + anchor[:, 0]
         pred_reg[:, 1] = pred_reg[:, 1] * anchor_size[1] + anchor[:, 1]
-        pred_reg[:, 2] = pred_reg[:, 2] * anchor_size[2] + anchor[:, 2]
+        pred_reg[:, 2] = pred_reg[:, 2] * anchor_size[0] + anchor[:, 2]
         pred_reg[:, 3] = xp.exp(pred_reg[:, 3]) * anchor_size[2] # pred_length 奥行き
         pred_reg[:, 4] = xp.exp(pred_reg[:, 4]) * anchor_size[1] # pred_width
         pred_reg[:, 5] = xp.exp(pred_reg[:, 5]) * anchor_size[0] # pred_height
@@ -199,42 +199,69 @@ class BasicModel(chainer.Chain):
         batch, _, h, w = pred_reg.shape
         gt_prob = gt_prob.reshape(batch, h, w).astype('bool')
         gt_reg = gt_reg.reshape(pred_reg.shape)
-        print(gt_reg.shape, pred_reg.shape)
         pred_reg = self.xp.transpose(pred_reg, (0, 2, 3, 1))
         gt_reg = self.xp.transpose(gt_reg, (0, 2, 3, 1))
 
-        anchor = self.xp.zeros((batch, h, w, 2))
+        # anchor = self.xp.zeros((batch, h, w, 2))
+        # x_array = F.broadcast_to(self.xp.arange(0, x_max - x_min, w_res*scale_label), (batch, h, w))
+        # y_array = F.broadcast_to(self.xp.arange(0, y_max - y_min, h_res*scale_label)[self.xp.newaxis, :, self.xp.newaxis], (batch, h, w))
+        # anchor[:, :, :, 0] = x_array.data
+        # anchor[:, :, :, 1] = y_array.data
+
+        # thres = F.sigmoid(pred_prob).data > thres_p
+        # img = np.zeros((h, w, 3), dtype="f")
+        # thres_cpu = chainer.cuda.to_cpu(thres)
+        # # print(thres.shape, thres_cpu.shape)
+        # img[thres_cpu[0]] = 1
+        #
+        # img = img * chainer.cuda.to_cpu(area_mask.transpose(1, 2, 0))
+
+        # fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10, 3))
+        # ax1.imshow(img)
+        # ax2.imshow(chainer.cuda.to_cpu(gt_prob.astype("f")[0]))
+        # plt.show()
+        # pred_center_x = pred_reg[thres][:, 0] * anchor_l + anchor[thres][:, 0]
+        # pred_center_y = pred_reg[:, :, :, 1] * anchor_w + anchor[:, :, :, 1]
+        # pred_length = self.xp.exp(pred_reg[:, :, :,  3]) * anchor_l
+        # pred_width = self.xp.exp(pred_reg[:, :, :,  4]) * anchor_w
+        # pred_rotate = pred_reg[:, :, :, 6] * 3.14160
+        #
+        # gt_center_x = gt_reg[:, :, :, 0] * anchor_l + anchor[:, :, :, 0]
+        # gt_center_y = gt_reg[:, :, :, 1] * anchor_w + anchor[:, :, :, 1]
+        # gt_length = self.xp.exp(gt_reg[:, :, :, 3]) * anchor_l
+        # gt_width = self.xp.exp(gt_reg[:, :, :, 4]) * anchor_w
+        # gt_rotate = gt_reg[:, :, :, 6] * 3.14160
+        #
+        # true_prob = self.xp.mean(F.sigmoid(pred_prob[gt_prob]).data)
+        # false_prob = 1 - self.xp.mean(F.sigmoid(pred_prob[~gt_prob]).data)
+
+        anchor = self.xp.zeros((batch, h, w, 3), dtype="f")
         x_array = F.broadcast_to(self.xp.arange(0, x_max - x_min, w_res*scale_label), (batch, h, w))
-        y_array = F.broadcast_to(self.xp.arange(0, y_max - y_min, h_res*scale_label)[self.xp.newaxis, :, self.xp.newaxis], (batch, h, w))
+        y_array = F.broadcast_to(self.xp.arange(0, y_max - y_min, h_res*scale_label)[self.xp.newaxis, :, self.xp.newaxis], (batch, h, w)) + y_min
         anchor[:, :, :, 0] = x_array.data
         anchor[:, :, :, 1] = y_array.data
-
-        thres = F.sigmoid(pred_prob).data > thres_p
-        img = np.zeros((h, w, 3), dtype="f")
-        thres_cpu = chainer.cuda.to_cpu(thres)
-        print(thres.shape, thres_cpu.shape)
-        img[thres_cpu[0]] = 1
-
-        img = img * chainer.cuda.to_cpu(area_mask.transpose(1, 2, 0))
-
-        fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10, 3))
-        ax1.imshow(img)
-        ax2.imshow(chainer.cuda.to_cpu(gt_prob.astype("f")[0]))
-        plt.show()
-        pred_center_x = pred_reg[thres][:, 0] * anchor_l + anchor[thres][:, 0]
-        pred_center_y = pred_reg[:, :, :, 1] * anchor_w + anchor[:, :, :, 1]
-        pred_length = self.xp.exp(pred_reg[:, :, :,  3]) * anchor_l
-        pred_width = self.xp.exp(pred_reg[:, :, :,  4]) * anchor_w
-        pred_rotate = pred_reg[:, :, :, 6] * 3.14160
-
-        gt_center_x = gt_reg[:, :, :, 0] * anchor_l + anchor[:, :, :, 0]
-        gt_center_y = gt_reg[:, :, :, 1] * anchor_w + anchor[:, :, :, 1]
-        gt_length = self.xp.exp(gt_reg[:, :, :, 3]) * anchor_l
-        gt_width = self.xp.exp(gt_reg[:, :, :, 4]) * anchor_w
-        gt_rotate = gt_reg[:, :, :, 6] * 3.14160
-
-        true_prob = self.xp.mean(F.sigmoid(pred_prob[gt_prob]).data)
-        false_prob = 1 - self.xp.mean(F.sigmoid(pred_prob[~gt_prob]).data)
+        anchor[:, :, :, 2] = anchor_center[0]
+        gt_reg = gt_reg[0] #self.xp.transpose(gt_reg, (0, 2, 3, 1)).data[0]
+        gt_prob = gt_prob[0].astype("f")
+        candidate = gt_prob * area_mask[0] > 0.5
+        gt_prob = gt_prob[candidate]
+        gt_reg = gt_reg[candidate]
+        gt_prob = chainer.cuda.to_cpu(gt_prob)
+        gt_reg = chainer.cuda.to_cpu(gt_reg)
+        candidate = chainer.cuda.to_cpu(candidate)
+        anchor = chainer.cuda.to_cpu(anchor)
+        anchor = anchor[0][candidate]
+        gt_reg = self.decoder(gt_reg, anchor, anchor_size, xp=np)
+        sort_index = np.argsort(gt_prob)[::-1]
+        gt_reg = gt_reg[sort_index]
+        gt_prob = gt_prob[sort_index]
+        thres_prob = 0.5
+        result_index = nms_3d(gt_reg,
+                              gt_prob,
+                              0.0)
+        print(gt_reg[result_index])
+        gt_reg[result_index][:, :7]
+        print("####################################")
 
     def viz_input(self, x):
         input_x = chainer.cuda.to_cpu(x.data.astype("f")[0])
@@ -261,7 +288,7 @@ class BasicModel(chainer.Chain):
             pred_prob, pred_reg = self.rpn(x)
             sum_time += print_timer(start, stop, sentence="rpn")
             print("## Sum of execution time: ", sum_time)
-            self.viz_input(y)
+            # self.viz_input(y)
             if config is not None:
                 print("#####   Visualize   #####")
                 self.visualize(pred_reg, gt_reg, pred_prob, gt_prob, area_mask,
@@ -291,26 +318,27 @@ class FeatureVoxelNet(chainer.Chain):
                y (ndarray): Shape is (Batch * K, 128)
         """
         n_batch, n_channels, n_points = x.shape
-
-        mask = F.max(x, axis=(1, 2), keepdims=True).data != 0
-        active_length = mask.sum()
+        # mask = F.max(x, axis=(1, 2), keepdims=True).data != 0
+        mask = F.max(x, axis=1, keepdims=True).data != 0
+        active_length = 0 #mask.sum()
 
         # Convolution1D -> BN -> relu -> pool -> concat
-        h = F.relu(self.bn1(self.conv1(x), active_length))
+        h = F.relu(self.bn1(self.conv1(x), active_length, mask))
         global_feat = F.max_pooling_nd(h, n_points)
         # Shape is (Batch, channel, points)
         global_feat_expand = F.tile(global_feat, (1, 1, n_points))
         h = F.concat((h, global_feat_expand))
         h *= mask
 
-        h = F.relu(self.bn2(self.conv2(h), active_length))
+        h = F.relu(self.bn2(self.conv2(h), active_length, mask))
         global_feat = F.max_pooling_nd(h, n_points)
         global_feat_expand = F.tile(global_feat, (1, 1, n_points))
         h = F.concat((h, global_feat_expand))
         h *= mask
 
-        h = F.relu(self.bn3(self.conv3(h), active_length))
-        h *= mask
+        # h = F.relu(self.bn3(self.conv3(h), active_length))
+        h = self.conv3(h)
+        # h *= mask
         return F.squeeze(F.max_pooling_nd(h, n_points))
 
 
@@ -856,10 +884,10 @@ class FeatureVoxelNet_v6(chainer.Chain):
     def __init__(self, out_ch=128):
         super(FeatureVoxelNet_v6, self).__init__(
             conv1 = L.ConvolutionND(1, 7, 32, 1, nobias=True),
-	        conv2 = L.ConvolutionND(1, 64, out_ch, 1, nobias=True),
+	        conv2 = L.ConvolutionND(1, 64, out_ch, 1),
             # conv3 = L.ConvolutionND(1, 128, out_ch, 1, nobias=True),
-	        bn1 = L.BatchNormalization(32),
-	        bn2 = L.BatchNormalization(out_ch))
+	        bn1 = L.BatchNormalization(32))
+	        # bn2 = L.BatchNormalization(out_ch))
 	        # bn3 = L.BatchNormalization(out_ch))
 
     def __call__(self, x, *args):
@@ -872,16 +900,19 @@ class FeatureVoxelNet_v6(chainer.Chain):
                y (ndarray): Shape is (Batch * K, 128)
         """
         n_batch, n_channels, n_points = x.shape
+        # mask = F.max(x, axis=(1, 2), keepdims=True).data != 0
+        mask = F.max(x, axis=1, keepdims=True).data != 0
+        active_length = 0 #mask.sum()
 
         # Convolution1D -> BN -> relu -> pool -> concat
-        h = F.relu(self.bn1(self.conv1(x)))
+        h = F.relu(self.bn1(self.conv1(x), active_length, mask))
         global_feat = F.max_pooling_nd(h, n_points)
-
         # Shape is (Batch, channel, points)
         global_feat_expand = F.tile(global_feat, (1, 1, n_points))
         h = F.concat((h, global_feat_expand))
+        h *= mask
 
-        h = F.relu(self.bn2(self.conv2(h)))
+        h = self.conv2(h)
         return F.squeeze(F.max_pooling_nd(h, n_points))
 
 
@@ -1052,22 +1083,22 @@ class OrigFeatureVoxelNet(chainer.Chain):
         """
         n_batch, n_channels, n_points = x.shape
         # mask = F.max(x, axis=(1, 2), keepdims=True).data != 0
-        mask1 = F.max(x, axis=1, keepdims=True).data != 0
+        mask = F.max(x, axis=1, keepdims=True).data != 0
         active_length = 0 #mask.sum()
 
         # Convolution1D -> BN -> relu -> pool -> concat
-        h = F.relu(self.bn1(self.conv1(x), active_length, mask1))
+        h = F.relu(self.bn1(self.conv1(x), active_length, mask))
         global_feat = F.max_pooling_nd(h, n_points)
         # Shape is (Batch, channel, points)
         global_feat_expand = F.tile(global_feat, (1, 1, n_points))
         h = F.concat((h, global_feat_expand))
-        h *= mask1
+        h *= mask
 
-        h = F.relu(self.bn2(self.conv2(h), active_length, mask1))
+        h = F.relu(self.bn2(self.conv2(h), active_length, mask))
         global_feat = F.max_pooling_nd(h, n_points)
         global_feat_expand = F.tile(global_feat, (1, 1, n_points))
         h = F.concat((h, global_feat_expand))
-        h *= mask1
+        h *= mask
 
         # h = F.relu(self.bn3(self.conv3(h), active_length))
         h = self.conv3(h)

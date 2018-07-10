@@ -26,6 +26,8 @@ def _transform(inputs, crop_size=(512, 512), g_scale=[0.95, 1.05],
     pc, places, rotates, size = inputs
     del inputs
 
+    places[:, 2] += size[:, 0]
+
     rotates = np.pi / 2 - rotates
     rotates = aug_rotate(rotates, 0)
 
@@ -90,7 +92,6 @@ def _transform(inputs, crop_size=(512, 512), g_scale=[0.95, 1.05],
                       x_min, x_max, y_min, y_max, z_min, z_max, thres_t,
                       anchor_l, anchor_w, anchor_h,
                       anchor_x, anchor_y, anchor_z, scale_label, surround_prob)
-    print("Counter", counter.sum()*7)
     return (feature_input, counter, indexes, gt_obj, gt_reg, gt_obj_for_reg,
              area_mask[None], np.array([indexes.shape[0]]), np.array([n_no_empty]))
 

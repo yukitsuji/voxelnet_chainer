@@ -26,6 +26,8 @@ def _transform(inputs, crop_size=(512, 512), g_scale=[0.95, 1.05],
     y_min, y_max = y_range
     z_min, z_max = z_range
 
+    places[:, 2] += size[:, 0] / 2.
+
     s = time.time()
     create_input = create_feature_input_rotate if norm_input else create_feature_input
     feature_input, counter, indexes, n_no_empty = \

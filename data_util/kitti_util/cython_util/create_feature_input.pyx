@@ -300,7 +300,7 @@ def create_label_rotate(
         int T, int D, int H, int W,
         float x_min, float x_max, float y_min, float y_max,
         float z_min, float z_max, int thres_t,
-        float anchor_l, float anchor_h, float anchor_w,
+        float anchor_l, float anchor_w, float anchor_h,
         float anchor_x, float anchor_y, float anchor_z,
         int scale_label, float surround_prob):
     """
@@ -356,7 +356,6 @@ def create_label_rotate(
         width = size[n, 1]
         length = size[n, 2]
         rotate = rotates[n]
-        z += height / 2
 
         x_label = <int>((x - x_min) / (W_res * scale_label))
         y_label = <int>((y - y_min) / (H_res * scale_label))
@@ -405,7 +404,7 @@ def create_label(
         int T, int D, int H, int W,
         float x_min, float x_max, float y_min, float y_max,
         float z_min, float z_max, int thres_t,
-        float anchor_l, float anchor_h, float anchor_w,
+        float anchor_l, float anchor_w, float anchor_h,
         float anchor_x, float anchor_y, float anchor_z,
         int scale_label, float surround_prob):
     """
@@ -457,7 +456,6 @@ def create_label(
         width = size[n, 1]
         length = size[n, 2]
         rotate = rotates[n]
-        z += height / 2
 
         x_label = <int>((x - x_min) / (W_res * scale_label))
         y_label = <int>((y - y_min) / (H_res * scale_label))
