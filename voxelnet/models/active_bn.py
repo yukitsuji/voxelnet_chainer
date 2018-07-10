@@ -90,7 +90,7 @@ class BatchNormalization(link.Link):
                 initial_beta.dtype = dtype
                 self.beta = variable.Parameter(initial_beta, size)
 
-    def __call__(self, x, active_len, **kwargs):
+    def __call__(self, x, active_len, mask, **kwargs):
         """__call__(self, x, finetune=False)
 
         Invokes the forward propagation of BatchNormalization.
@@ -140,14 +140,10 @@ class BatchNormalization(link.Link):
             else:
                 decay = self.decay
 
-            # ret = self.xp.zeros_like(x, dtype=x.dtype)
-            # x = x[:active_len]
             ret = func_active_bn.batch_normalization(
                 x, gamma, beta, eps=self.eps, running_mean=self.avg_mean,
-                running_var=self.avg_var, decay=decay, active_len=active_len)
-            # ret[:active_len] = func_active_bn.batch_normalization(
-            #     x, gamma, beta, eps=self.eps, running_mean=self.avg_mean,
-            #     running_var=self.avg_var, decay=decay).data
+                running_var=self.avg_var, decay=decay, active_len=active_len,
+                mask=mask)
         else:
             # Use running average statistics or fine-tuned statistics.
             mean = variable.Variable(self.avg_mean)

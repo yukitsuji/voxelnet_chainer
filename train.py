@@ -23,6 +23,7 @@ from collections import OrderedDict
 yaml.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
     lambda loader, node: OrderedDict(loader.construct_pairs(node)))
 
+
 def train_voxelnet():
     """Training VoxelNet."""
     config = parse_args()

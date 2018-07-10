@@ -75,6 +75,7 @@ def _transform(inputs, crop_size=(512, 512), g_scale=[0.95, 1.05],
 
     create_input = create_feature_input_rotate if norm_input else create_feature_input
     pc = np.ascontiguousarray(pc, dtype=np.float32)
+
     feature_input, counter, indexes, n_no_empty = \
         create_input(pc, d_res, h_res, w_res, t, d, h, w,
                      x_min, x_max, y_min, y_max, z_min, z_max, thres_t, r, angle)
@@ -89,6 +90,7 @@ def _transform(inputs, crop_size=(512, 512), g_scale=[0.95, 1.05],
                       x_min, x_max, y_min, y_max, z_min, z_max, thres_t,
                       anchor_l, anchor_w, anchor_h,
                       anchor_x, anchor_y, anchor_z, scale_label, surround_prob)
+    print("Counter", counter.sum()*7)
     return (feature_input, counter, indexes, gt_obj, gt_reg, gt_obj_for_reg,
              area_mask[None], np.array([indexes.shape[0]]), np.array([n_no_empty]))
 

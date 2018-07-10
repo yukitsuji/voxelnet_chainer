@@ -48,7 +48,7 @@ class BasicModel(chainer.Chain):
                loss (Variable).
         """
         with self.xp.cuda.Device(chainer.cuda.get_device_from_array(x)):
-            x = self.feature_net(x)
+            x = self.feature_net(x, n_no_empty)
             x = feature_to_voxel(x, indexes, self.k, self.d, self.h, self.w, batch)
             x = self.middle_conv(x)
             pred_prob, pred_reg = self.rpn(x)
@@ -1036,10 +1036,10 @@ class OrigFeatureVoxelNet(chainer.Chain):
         super(OrigFeatureVoxelNet, self).__init__(
             conv1 = L.ConvolutionND(1, 7, 16, 1, nobias=True),
 	        conv2 = L.ConvolutionND(1, 32, 64, 1, nobias=True),
-            conv3 = L.ConvolutionND(1, 128, out_ch, 1, nobias=True),
+            conv3 = L.ConvolutionND(1, 128, out_ch, 1),
 	        bn1 = BN(16), #L.BatchNormalization(16),
-	        bn2 = BN(64), #L.BatchNormalization(64),
-	        bn3 = BN(out_ch)) #L.BatchNormalization(out_ch))
+	        bn2 = BN(64)) #L.BatchNormalization(64),
+	        # bn3 = BN(out_ch)) #L.BatchNormalization(out_ch))
 
     def __call__(self, x, *args):
         """
@@ -1051,26 +1051,27 @@ class OrigFeatureVoxelNet(chainer.Chain):
                y (ndarray): Shape is (Batch * K, 128)
         """
         n_batch, n_channels, n_points = x.shape
-
-        mask = F.max(x, axis=(1, 2), keepdims=True).data != 0
-        active_length = mask.sum()
+        # mask = F.max(x, axis=(1, 2), keepdims=True).data != 0
+        mask1 = F.max(x, axis=1, keepdims=True).data != 0
+        active_length = 0 #mask.sum()
 
         # Convolution1D -> BN -> relu -> pool -> concat
-        h = F.relu(self.bn1(self.conv1(x), active_length))
+        h = F.relu(self.bn1(self.conv1(x), active_length, mask1))
         global_feat = F.max_pooling_nd(h, n_points)
         # Shape is (Batch, channel, points)
         global_feat_expand = F.tile(global_feat, (1, 1, n_points))
         h = F.concat((h, global_feat_expand))
-        h *= mask
+        h *= mask1
 
-        h = F.relu(self.bn2(self.conv2(h), active_length))
+        h = F.relu(self.bn2(self.conv2(h), active_length, mask1))
         global_feat = F.max_pooling_nd(h, n_points)
         global_feat_expand = F.tile(global_feat, (1, 1, n_points))
         h = F.concat((h, global_feat_expand))
-        h *= mask
+        h *= mask1
 
-        h = F.relu(self.bn3(self.conv3(h), active_length))
-        h *= mask
+        # h = F.relu(self.bn3(self.conv3(h), active_length))
+        h = self.conv3(h)
+        # h *= mask
         return F.squeeze(F.max_pooling_nd(h, n_points))
 
 

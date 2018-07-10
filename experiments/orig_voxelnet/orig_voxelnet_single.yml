@@ -66,7 +66,7 @@ updater:
 
 iterator:
   name: SerialIterator #MultiprocessIterator
-  train_batchsize: 2
+  train_batchsize: 1
   test_batchsize: 2
   # args:
   #   n_processes: 4

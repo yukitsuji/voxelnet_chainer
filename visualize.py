@@ -102,6 +102,7 @@ def viz_rviz(index, base_path, dataformat="bin",
         places, rotates, size = read_labels(label_path, label_type,
                                             is_velo_cam=is_velo_cam,
                                             proj_velo=proj_velo)
+        print(places)
         # print(rotates)
         # rotates[:] = 0
         places = np.dot(places, rotate_matrix.transpose())
@@ -142,11 +143,13 @@ def viz_rviz(index, base_path, dataformat="bin",
                                                         label_type,
                                                         is_velo_cam=is_velo_cam,
                                                         proj_velo=proj_velo)
+        print(pre_places)
         pre_rotates = np.pi / 2 - pre_rotates
         pre_corners = get_boxcorners(pre_places, pre_rotates, pre_size)
         pre_corners = pre_corners.reshape(-1, 3)
 
     pc = filter_camera_angle(pc)
+    print("mean", pc.mean(axis=0))
     anchor_center = center_to_anchor(places, size, resolution=0.25)
     bbox = anchor_to_center(anchor_center, resolution=0.25)
 

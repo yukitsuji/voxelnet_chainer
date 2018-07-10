@@ -79,6 +79,30 @@ def proj_img_to_velo(calib_data):
     inv_velo_to_cam = np.linalg.pinv(velo_to_cam[:, :3])
     return np.dot(inv_velo_to_cam, inv_rect)
 
+def read_labels(label_path, label_type="txt", is_velo_cam=True,
+                proj_velo=None):
+    """Read labels from xml or txt file.
+       Original Label value is shifted about 0.27m from object center.
+       So need to revise the position of objects.
+    """
+    if label_type == "txt":
+        places, size, rotates = read_label_from_txt(label_path)
+        if places is None:
+            return None, None, None
+        # rotates = np.pi / 2 - rotates
+        if proj_velo is not None:
+            places = np.dot(places, proj_velo.transpose())
+        if is_velo_cam:
+            places[:, 0] += 0.27
+
+    elif label_type == "xml": # TODO
+        bounding_boxes, size = read_label_from_xml(label_path)
+        places = bounding_boxes[30]["place"]
+        rotates = bounding_boxes[30]["rotate"][:, 2]
+        size = bounding_boxes[30]["size"]
+
+    return places.astype(np.float32), rotates.astype(np.float32), size.astype(np.float32)
+
 def filter_camera_angle(places, angle=1.):
     """Filter pointclound by camera angle"""
     bool_in = np.logical_and((places[:, 1] * angle < places[:, 0]),
@@ -139,30 +163,6 @@ def pointcloud_to_voxel(pc, resolution=0.50,
 def voxel_to_corner(center, corner):
     """Create 3D corner from voxel and the diff to corner"""
     return center + corner
-
-def read_labels(label_path, label_type="txt", is_velo_cam=True,
-                proj_velo=None):
-    """Read labels from xml or txt file.
-       Original Label value is shifted about 0.27m from object center.
-       So need to revise the position of objects.
-    """
-    if label_type == "txt":
-        places, size, rotates = read_label_from_txt(label_path)
-        if places is None:
-            return None, None, None
-        # rotates = np.pi / 2 - rotates
-        if proj_velo is not None:
-            places = np.dot(places, proj_velo.transpose())
-        if is_velo_cam:
-            places[:, 0] += 0.27
-
-    elif label_type == "xml": # TODO
-        bounding_boxes, size = read_label_from_xml(label_path)
-        places = bounding_boxes[30]["place"]
-        rotates = bounding_boxes[30]["rotate"][:, 2]
-        size = bounding_boxes[30]["size"]
-
-    return places.astype(np.float32), rotates.astype(np.float32), size.astype(np.float32)
 
 def center_to_anchor(center, size, resolution=0.50, scale=4,
                      x=(0, 90), y=(-50, 50), z=(-4.5, 5.5)):
