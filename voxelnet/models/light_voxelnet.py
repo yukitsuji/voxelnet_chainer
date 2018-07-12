@@ -42,7 +42,7 @@ class BasicModel(chainer.Chain):
                             vx, vy, vz is local mean at each voxel.
                indexes (ndarray): Shape is (Batch * K, 3). 3 is (d, h, w).
                gt_prob (ndarray): Shape is (Batch, H, W) or (Batch, H, W, 2).
-               gt_reg (ndarray): Shape is (Batch, H, W, 7).
+               gt_reg (ndarray): Shape is (Batch, 8, H, W).
                area_mask (ndarray): Shape is (Batch, H, W)
            Return:
                loss (Variable).
@@ -67,9 +67,9 @@ class BasicModel(chainer.Chain):
         """
            Args:
                pred_prob: Shape is (Batch, 1, H, W)
-               pred_reg: Shape is (Batch, 7, H, W)
+               pred_reg: Shape is (Batch, 8, H, W)
                gt_prob: Shape is (Batch, H, W) # 0 or 1
-               gt_reg: Shape is (Batch, 7, H, W) x, y, z, l, w, h, rotate
+               gt_reg: Shape is (Batch, 8, H, W) x, y, z, l, w, h, rotate, head of rotate
                mask: Shape is (Batch, 1, H, W). Mask is a search area of model.
         """
         batch, _, h, w = pred_prob.shape
@@ -403,8 +403,8 @@ class RegionProposalNet(chainer.Chain):
             deconv2 = L.Deconvolution2D(128, 256, 2, 2, 0, nobias=True),
             deconv3 = L.Deconvolution2D(256, 256, 4, 4, 0, nobias=True),
 
-            prob_conv = L.Convolution2D(768, 1, 1, 1, 0, nobias=True),
-            reg_conv = L.Convolution2D(768, 8, 1, 1, 0, nobias=True),
+            prob_conv = L.Convolution2D(768, 1, 1, 1, 0, nobias=False),
+            reg_conv = L.Convolution2D(768, 8, 1, 1, 0, nobias=False),
 
             bn1_1 = L.BatchNormalization(64),
             bn1_2 = L.BatchNormalization(64),
@@ -573,8 +573,8 @@ class RegionProposalNet_v3(chainer.Chain):
             deconv2 = L.Deconvolution2D(128, 256, 2, 2, 0, nobias=True),
             deconv3 = L.Deconvolution2D(256, 256, 4, 4, 0, nobias=True),
 
-            prob_conv = L.Convolution2D(512, 1, 1, 1, 0, nobias=True),
-            reg_conv = L.Convolution2D(512, 8, 1, 1, 0, nobias=True),
+            prob_conv = L.Convolution2D(512, 1, 1, 1, 0, nobias=False),
+            reg_conv = L.Convolution2D(512, 8, 1, 1, 0, nobias=False),
 
             bn1_1 = L.BatchNormalization(64),
             bn1_2 = L.BatchNormalization(64),
@@ -683,8 +683,8 @@ class RegionProposalNet_v4(chainer.Chain):
             deconv2 = L.Deconvolution2D(128, 256, 2, 2, 0, nobias=True),
             deconv3 = L.Deconvolution2D(256, 256, 4, 4, 0, nobias=True),
 
-            prob_conv = L.Convolution2D(256, 1, 1, 1, 0, nobias=True),
-            reg_conv = L.Convolution2D(256, 8, 1, 1, 0, nobias=True),
+            prob_conv = L.Convolution2D(256, 1, 1, 1, 0, nobias=False),
+            reg_conv = L.Convolution2D(256, 8, 1, 1, 0, nobias=False),
 
             bn1_1 = L.BatchNormalization(64),
             bn1_2 = L.BatchNormalization(64),
@@ -788,8 +788,8 @@ class RegionProposalNet_v5(chainer.Chain):
             conv4 = L.Convolution2D(768, 768, 3, 1, 1, nobias=True),
             bn4 = L.BatchNormalization(768),
 
-            prob_conv = L.Convolution2D(768, 1, 1, 1, 0, nobias=True),
-            reg_conv = L.Convolution2D(768, 8, 1, 1, 0, nobias=True),
+            prob_conv = L.Convolution2D(768, 1, 1, 1, 0, nobias=False),
+            reg_conv = L.Convolution2D(768, 8, 1, 1, 0, nobias=False),
 
             bn1_1 = L.BatchNormalization(64),
             bn1_2 = L.BatchNormalization(64),
@@ -977,8 +977,8 @@ class RegionProposalNet_v7(chainer.Chain):
             conv4 = L.Convolution2D(512, 768, 3, 1, 1, nobias=True),
             bn4 = L.BatchNormalization(768),
 
-            prob_conv = L.Convolution2D(768, 1, 1, 1, 0, nobias=True),
-            reg_conv = L.Convolution2D(768, 8, 1, 1, 0, nobias=True),
+            prob_conv = L.Convolution2D(768, 1, 1, 1, 0, nobias=False),
+            reg_conv = L.Convolution2D(768, 8, 1, 1, 0, nobias=False),
 
             bn1_1 = L.BatchNormalization(64),
             bn1_2 = L.BatchNormalization(64),
@@ -1159,8 +1159,8 @@ class OrigRegionProposalNet(chainer.Chain):
             deconv2 = L.Deconvolution2D(128, 256, 2, 2, 0, nobias=True),
             deconv3 = L.Deconvolution2D(256, 256, 4, 4, 0, nobias=True),
 
-            prob_conv = L.Convolution2D(768, 1, 1, 1, 0, nobias=True),
-            reg_conv = L.Convolution2D(768, 8, 1, 1, 0, nobias=True),
+            prob_conv = L.Convolution2D(768, 1, 1, 1, 0, nobias=False),
+            reg_conv = L.Convolution2D(768, 8, 1, 1, 0, nobias=False),
 
             bn1_1 = L.BatchNormalization(in_ch),
             bn1_2 = L.BatchNormalization(128),

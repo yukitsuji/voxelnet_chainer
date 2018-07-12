@@ -13,3 +13,4 @@ evaluate_object
 data_util/kitti_util/cython_util/create_feature_input.cpp
 data_util/kitti_util/cython_util/create_input.cpp
 data_util/kitti_util/cython_util/nms.cpp
+out/*

@@ -15,10 +15,13 @@ python train.py experiments/orig_voxelnet/orig_voxelnet_single.yml
 ######## Evaluation by kitti dataset ########
 python evaluation.py experiments/orig_voxelnet/orig_voxelnet_eval.yml --gpu 0 --nms_thresh 0.5 --thresh 0.5
 
+・Split gt and result files into train/val 
+python parse_dataset.py val.txt --gt_dir dataset/label_2/ --result_dir results/ --out_dir ../out/
+
 ・Provided by KITTI competition
 cd devkit_object/cpp
-g++ -O3 -DNDEBUG -o evaluate_object evaluate_object.cpp
-./evaluate_object ./results/result_dir
+g++ -O3 -DNDEBUG -o evaluate_object evaluate_object.cpp -lboost_system -lboost_filesystem
+cd ../.. && ./devkit_object/cpp/evaluate_object ./out/result ./out/gt
 
 ######## Inference by kitti dataset ########
 python demo.py experiments/orig_voxelnet/orig_voxelnet_demo.yml --gpu 0

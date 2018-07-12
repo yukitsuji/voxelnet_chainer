@@ -26,7 +26,7 @@ def _transform(inputs, crop_size=(512, 512), g_scale=[0.95, 1.05],
     pc, places, rotates, size = inputs
     del inputs
 
-    places[:, 2] += size[:, 0]
+    places[:, 2] += size[:, 0] / 2.
 
     rotates = np.pi / 2 - rotates
     rotates = aug_rotate(rotates, 0)
@@ -85,6 +85,8 @@ def _transform(inputs, crop_size=(512, 512), g_scale=[0.95, 1.05],
 
     anchor_z, anchor_y, anchor_x = anchor_center
     anchor_h, anchor_w, anchor_l = anchor_size
+
+    # bird_corners = get_bird_boxcorners(places, rotates, size)
 
     label_creator = create_label_rotate if label_rotate else create_label
     gt_obj, gt_reg, gt_obj_for_reg = \

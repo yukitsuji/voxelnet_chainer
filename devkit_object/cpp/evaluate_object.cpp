@@ -19,10 +19,18 @@
 
 #include "mail.h"
 
+#include <stdio.h>
+#include <sys/types.h>
+#include <dirent.h>
+
 BOOST_GEOMETRY_REGISTER_C_ARRAY_CS(cs::cartesian)
 
 typedef boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double> > Polygon;
-
+#include <boost/foreach.hpp>
+#include "boost/filesystem.hpp"   // includes all needed Boost.Filesystem declarations
+#include <iostream>               // for std::cout
+// using boost::filesystem;
+namespace fs = boost::filesystem;
 
 using namespace std;
 
@@ -32,7 +40,7 @@ STATIC EVALUATION PARAMETERS
 
 // holds the number of test images on the server
 // const int32_t N_TESTIMAGES = 7518;
-const int32_t N_TESTIMAGES = 7480; // 7480; // training sets
+int32_t N_TESTIMAGES = 7480; // 7480; // training sets
 
 // easy, moderate and hard evaluation level
 enum DIFFICULTY{EASY=0, MODERATE=1, HARD=2};
@@ -53,7 +61,7 @@ const int NUM_CLASS = 3;
 vector<string> CLASS_NAMES;
 vector<string> CLASS_NAMES_CAP;
 // the minimum overlap required for 2D evaluation on the image/ground plane and 3D evaluation
-const double MIN_OVERLAP[3][3] = {{0.5, 0.5, 0.5}, {0.5, 0.5, 0.5}, {0.5, 0.5, 0.5}};
+const double MIN_OVERLAP[3][3] = {{0.7, 0.5, 0.5}, {0.7, 0.5, 0.5}, {0.7, 0.5, 0.5}};
 
 // no. of recall steps that should be evaluated (discretized)
 const double N_SAMPLE_PTS = 41;
@@ -145,7 +153,7 @@ vector<tDetection> loadDetections(string file_name, bool &compute_aos,
     tDetection d;
     double trash;
     char str[255];
-    std::cout << "True\n";
+    // std::cout << "True\n";
     if (fscanf(fp, "%s %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
                    str, &trash, &trash, &d.box.alpha, &d.box.x1, &d.box.y1,
                    &d.box.x2, &d.box.y2, &d.h, &d.w, &d.l, &d.t1, &d.t2, &d.t3,
@@ -770,15 +778,30 @@ void saveAndPlotPlots(string dir_name,string file_name,string obj_type,vector<do
   system(command);
 }
 
-bool eval(string result_dir, Mail* mail){
+bool eval(string result_dir, string dataset_dir, Mail* mail){
 
   // set some global parameters
   initGlobals();
 
   // ground truth and result directories
-  string gt_dir         = "/home/yukitsuji/dataset/kitti_detection/training/label_2"; //"data/object/label_2";
-  // string result_dir     = "/home/yukitsuji/dataset/kitti_detection/training/label_2"; //"results/" + result_dir;
+  string gt_dir         = dataset_dir; //"data/object/label_2";
   string plot_dir       = result_dir + "/plot";
+
+
+  namespace fs = boost::filesystem;
+  const fs::path path(dataset_dir);
+  int i = 0;
+  BOOST_FOREACH(const fs::path& p, std::make_pair(fs::directory_iterator(path),
+                                                  fs::directory_iterator())) {
+      if (!fs::is_directory(p))
+          i++;
+          // std::cout << p.filename() << std::endl;
+  }
+  N_TESTIMAGES = i;
+
+  // int count = std::distance(boost::filesystem::directory_iterator(my_path), boost::filesystem::directory_iterator());
+  // int count = files.size();
+  printf("There's %d files in the current directory.\n", i);
 
   // create output directories
   system(("mkdir " + plot_dir).c_str());
@@ -903,14 +926,14 @@ bool eval(string result_dir, Mail* mail){
 int32_t main (int32_t argc,char *argv[]) {
 
   // we need 2 or 4 arguments!
-  if (argc!=2 && argc!=4) {
+  if (argc!=3 && argc!=4) {
     cout << "Usage: ./eval_detection result_dir [user_sha email]" << endl;
     return 1;
   }
 
   // read arguments
   string result_dir = argv[1];
-
+  string dataset_dir = argv[2];
   // init notification mail
   Mail *mail;
   if (argc==4) mail = new Mail(argv[3]);
@@ -918,9 +941,8 @@ int32_t main (int32_t argc,char *argv[]) {
   mail->msg("Thank you for participating in our evaluation!");
 
   // run evaluation
-  if (eval(result_dir,mail)) {
+  if (eval(result_dir, dataset_dir, mail)) {
     mail->msg("Your evaluation results are available at:");
-    mail->msg("http://www.cvlibs.net/datasets/kitti/user_submit_check_login.php?benchmark=object&user=%s&result=%s",argv[2], result_dir.c_str());
   } else {
     system(("rm -r results/" + result_dir).c_str());
     mail->msg("An error occured while processing your results.");

@@ -140,6 +140,32 @@ def get_boxcorners(places, rotates, size):
         corners.append(rotated_corner)
     return np.array(corners)
 
+def get_bird_boxcorners(places, rotates, size):
+    """Create 4 corners of bounding box from bottom center."""
+    corners = []
+    for (place, rotate, sz) in zip(places, rotates, size):
+        x, y, z = place
+        h, w, l = sz
+
+        corner = np.array([
+            [- l / 2., - w / 2.],
+            [- l / 2., + w / 2.],
+            [+ l / 2., - w / 2.],
+            [+ l / 2., + w / 2.],
+        ])
+
+        # corner -= np.array([x, y, z])
+
+        rotate_matrix = np.array([
+            [np.cos(rotate), -np.sin(rotate)],
+            [np.sin(rotate), np.cos(rotate)],
+        ])
+
+        rotated_corner = np.dot(corner, rotate_matrix.transpose())
+        rotated_corner += np.array([x, y])
+        corners.append(rotated_corner)
+    return np.array(corners, dtype="f")
+
 def judge_in_voxel_area(points, x, y, z):
     x_logical = np.logical_and((points[:, 0] < x[1]), (points[:, 0] >= x[0]))
     y_logical = np.logical_and((points[:, 1] < y[1]), (points[:, 1] >= y[0]))
