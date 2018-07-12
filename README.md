@@ -1,4 +1,4 @@
-# CNN base 3D vehicle detection using LiDAR by Chainer
+# VoxelNet implementation in Chainer
 Reference:
 - VoxelNet [link](https://arxiv.org/pdf/1711.06396.pdf)
 
@@ -12,24 +12,24 @@ cp data/*.txt dataset/ImageSets/
 
 # Execution
 ```
-######## Training by kitti dataset ########
+######## Training on the kitti dataset ########
 python train.py experiments/orig_voxelnet/orig_voxelnet_single.yml
 
-######## Evaluation by kitti dataset ########
+######## Evaluation on the kitti dataset ########
 python evaluation.py experiments/orig_voxelnet/orig_voxelnet_eval.yml --gpu 0 --nms_thresh 0.5 --thresh 0.5
 
 ・Split gt and result files into train/val
 python parse_dataset.py val.txt --gt_dir dataset/label_2/ --result_dir results/ --out_dir ../out/
 
-・Provided by KITTI competition
+・Provided on the KITTI competition
 cd devkit_object/cpp
 g++ -O3 -DNDEBUG -o evaluate_object evaluate_object.cpp -lboost_system -lboost_filesystem
 cd ../.. && ./devkit_object/cpp/evaluate_object ./out/result ./out/gt
 
-######## Inference by kitti dataset ########
+######## Inference on the kitti dataset ########
 python demo.py experiments/orig_voxelnet/orig_voxelnet_demo.yml --gpu 0
 
-######## Visualize by kitti dataset ########
+######## Visualize on the kitti dataset ########
 ・Compate inputs for network by threshold
 python visualize.py --type input --config experiments/orig_voxelnet/orig_voxelnet_viz.yml
 ・Calculate statistic of raw data
