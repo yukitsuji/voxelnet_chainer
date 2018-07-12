@@ -488,7 +488,8 @@ class LightVoxelnet(BasicModel):
                 subprocess.call(['wget', pretrained_model['download']])
 
         if pretrained_model['path']:
-            chainer.serializers.load_npz(pretrained_model['path'], self)
+            chainer.serializers.load_npz(pretrained_model['path'], self,
+                                         strict=False)
 
 
 class FeatureVoxelNet_v2(chainer.Chain):
@@ -541,7 +542,8 @@ class LightVoxelnet_v2(BasicModel):
                 subprocess.call(['wget', pretrained_model['download']])
 
         if pretrained_model['path']:
-            chainer.serializers.load_npz(pretrained_model['path'], self)
+            chainer.serializers.load_npz(pretrained_model['path'], self,
+                                         strict=False)
 
 
 class RegionProposalNet_v3(chainer.Chain):
@@ -651,7 +653,8 @@ class LightVoxelnet_v3(BasicModel):
                 subprocess.call(['wget', pretrained_model['download']])
 
         if pretrained_model['path']:
-            chainer.serializers.load_npz(pretrained_model['path'], self)
+            chainer.serializers.load_npz(pretrained_model['path'], self,
+                                         strict=False)
 
 
 class RegionProposalNet_v4(chainer.Chain):
@@ -753,7 +756,8 @@ class LightVoxelnet_v4(BasicModel):
                 subprocess.call(['wget', pretrained_model['download']])
 
         if pretrained_model['path']:
-            chainer.serializers.load_npz(pretrained_model['path'], self)
+            chainer.serializers.load_npz(pretrained_model['path'], self,
+                                         strict=False)
 
 
 class RegionProposalNet_v5(chainer.Chain):
@@ -874,7 +878,8 @@ class LightVoxelnet_v5(BasicModel):
                 subprocess.call(['wget', pretrained_model['download']])
 
         if pretrained_model['path']:
-            chainer.serializers.load_npz(pretrained_model['path'], self)
+            chainer.serializers.load_npz(pretrained_model['path'], self,
+                                         strict=False)
 
 
 class FeatureVoxelNet_v6(chainer.Chain):
@@ -942,7 +947,8 @@ class LightVoxelnet_v6(BasicModel):
                 subprocess.call(['wget', pretrained_model['download']])
 
         if pretrained_model['path']:
-            chainer.serializers.load_npz(pretrained_model['path'], self)
+            chainer.serializers.load_npz(pretrained_model['path'], self,
+                                         strict=False)
 
 
 class RegionProposalNet_v7(chainer.Chain):
@@ -1056,7 +1062,8 @@ class LightVoxelnet_v7(BasicModel):
                 subprocess.call(['wget', pretrained_model['download']])
 
         if pretrained_model['path']:
-            chainer.serializers.load_npz(pretrained_model['path'], self)
+            chainer.serializers.load_npz(pretrained_model['path'], self,
+                                         strict=False)
 
 
 class OrigFeatureVoxelNet(chainer.Chain):
@@ -1244,4 +1251,5 @@ class OrigVoxelnet(BasicModel):
                 subprocess.call(['wget', pretrained_model['download']])
 
         if pretrained_model['path']:
-            chainer.serializers.load_npz(pretrained_model['path'], self)
+            chainer.serializers.load_npz(pretrained_model['path'], self,
+                                         strict=False)
