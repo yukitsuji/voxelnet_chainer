@@ -6,6 +6,9 @@ Reference:
 ## KITTI dataset
 - 3D Detection Dataset [link](http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d)  
 - (in data folder) train/val split [link](http://www.cs.toronto.edu/objprop3d/downloads.php)
+```
+cp data/*.txt dataset/ImageSets/
+```
 
 # Execution
 ```
@@ -15,7 +18,7 @@ python train.py experiments/orig_voxelnet/orig_voxelnet_single.yml
 ######## Evaluation by kitti dataset ########
 python evaluation.py experiments/orig_voxelnet/orig_voxelnet_eval.yml --gpu 0 --nms_thresh 0.5 --thresh 0.5
 
-・Split gt and result files into train/val 
+・Split gt and result files into train/val
 python parse_dataset.py val.txt --gt_dir dataset/label_2/ --result_dir results/ --out_dir ../out/
 
 ・Provided by KITTI competition
