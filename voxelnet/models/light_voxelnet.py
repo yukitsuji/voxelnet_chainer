@@ -303,10 +303,10 @@ class FeatureVoxelNet(chainer.Chain):
         super(FeatureVoxelNet, self).__init__(
             conv1 = L.ConvolutionND(1, 7, 16, 1, nobias=True),
             conv2 = L.ConvolutionND(1, 32, 64, 1, nobias=True),
-            conv3 = L.ConvolutionND(1, 128, out_ch, 1, nobias=True),
-	        bn1 = BN(16), #L.BatchNormalization(16),
-	        bn2 = BN(64), #L.BatchNormalization(64),
-	        bn3 = BN(out_ch)) #L.BatchNormalization(out_ch))
+            conv3 = L.ConvolutionND(1, 128, out_ch, 1),
+            bn1 = BN(16), #L.BatchNormalization(16),
+            bn2 = BN(64)) #L.BatchNormalization(64),
+            #bn3 = BN(out_ch)) #L.BatchNormalization(out_ch))
 
     def __call__(self, x, *args):
         """
@@ -1073,11 +1073,11 @@ class OrigFeatureVoxelNet(chainer.Chain):
     def __init__(self, out_ch=128):
         super(OrigFeatureVoxelNet, self).__init__(
             conv1 = L.ConvolutionND(1, 7, 16, 1, nobias=True),
-	        conv2 = L.ConvolutionND(1, 32, 64, 1, nobias=True),
+            conv2 = L.ConvolutionND(1, 32, 64, 1, nobias=True),
             conv3 = L.ConvolutionND(1, 128, out_ch, 1),
-	        bn1 = BN(16), #L.BatchNormalization(16),
-	        bn2 = BN(64)) #L.BatchNormalization(64),
-	        # bn3 = BN(out_ch)) #L.BatchNormalization(out_ch))
+            bn1 = BN(16), #L.BatchNormalization(16),
+            bn2 = BN(64)) #L.BatchNormalization(64),
+            # bn3 = BN(out_ch)) #L.BatchNormalization(out_ch))
 
     def __call__(self, x, *args):
         """
