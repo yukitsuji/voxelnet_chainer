@@ -106,9 +106,10 @@ class BasicModel(chainer.Chain):
         chainer.report({'nega': negative_loss}, self)
         return conf_loss, loc_loss
 
-    def decoder(self, pred_reg, anchor, anchor_size, xp=np):
-        pred_reg[:, 0] = pred_reg[:, 0] * anchor_size[2] + anchor[:, 0]
-        pred_reg[:, 1] = pred_reg[:, 1] * anchor_size[1] + anchor[:, 1]
+    def decoder(self, pred_reg, anchor, anchor_size, xp=np, a_res=0.8):
+        anchor_x, anchor_y = a_res, a_res
+        pred_reg[:, 0] = pred_reg[:, 0] * anchor_x + anchor[:, 0] #anchor_size[2]
+        pred_reg[:, 1] = pred_reg[:, 1] * anchor_y + anchor[:, 1] # anchor_size[1]
         pred_reg[:, 2] = pred_reg[:, 2] * anchor_size[0] + anchor[:, 2]
         pred_reg[:, 3] = xp.exp(pred_reg[:, 3]) * anchor_size[2] # pred_length 奥行き
         pred_reg[:, 4] = xp.exp(pred_reg[:, 4]) * anchor_size[1] # pred_width
@@ -116,30 +117,6 @@ class BasicModel(chainer.Chain):
         rotate_head = np.where(pred_reg[:, 7] >= 0 , 1, -1) # rotate angle
         pred_reg[:, 6] = rotate_head * pred_reg[:, 6] * (np.pi / 2) # pred_rotate
         return pred_reg
-
-    # def softmax_cross_entropy(self, pred_prob, gt_prob, pred_reg, gt_reg):
-    #     """
-    #        Args:
-    #            pred_prob: Shape is (Batch, 2, H, W)
-    #            pred_reg: Shape is (Batch, 7, H, W)
-    #            gt_prob: Shape is (Batch, H, W) # 0 or 1
-    #            gt_reg: Shape is (Batch, 7, H, W)
-    #     """
-    #     num_positive = gt_prob.sum()
-    #     batch, _, h, w = pred_prob.shape
-    #     gt_prob = gt_prob.reshape(batch, h, w)
-    #     gt_reg = gt_reg.reshape(pred_reg.shape)
-    #     loc_loss = F.sum(F.huber_loss(pred_reg, gt_reg, 1, reduce='no'), axis=1)
-    #     loc_loss = F.sum(loc_loss * gt_prob) / num_positive
-    #     exp_prob = F.exp(pred_prob)
-    #     exp_prob = exp_prob / F.broadcast_to(F.sum(exp_prob, axis=1, keepdims=True), (batch, 2, h, w))
-    #     positive_loss = F.sum(-F.log(exp_prob[:, 0] + 1e-5) * gt_prob) / num_positive
-    #     num_negative = (1 - gt_prob).sum()
-    #     negative_loss = F.sum(-F.log(exp_prob[:, 1] + 1e-5) * (1 - gt_prob)) / num_negative
-    #     conf_loss = self.alpha * positive_loss + self.beta * negative_loss
-    #     chainer.report({'posi': positive_loss}, self)
-    #     chainer.report({'nega': negative_loss}, self)
-    #     return conf_loss, loc_loss
 
     def inference(self, x, counter, indexes, batch, n_no_empty, area_mask,
                   config=None, thres_prob=0.996, nms_thresh=0.0,
@@ -163,7 +140,7 @@ class BasicModel(chainer.Chain):
             pred_reg = chainer.cuda.to_cpu(pred_reg)
             candidate = chainer.cuda.to_cpu(candidate)
             anchor = anchor[candidate]
-            pred_reg = self.decoder(pred_reg, anchor, anchor_size, xp=np)
+            pred_reg = self.decoder(pred_reg, anchor, anchor_size, xp=np, res=0.8)
             sort_index = np.argsort(pred_prob)[::-1]
             pred_reg = pred_reg[sort_index]
             pred_prob = pred_prob[sort_index]
@@ -173,18 +150,12 @@ class BasicModel(chainer.Chain):
             print("Post-processing", time.time() - s)
         return pred_reg[result_index][:, :7], pred_prob[result_index]
 
-    def visualize(self, pred_reg, gt_reg, pred_prob, gt_prob, area_mask,
+    def debug(self, pred_reg, gt_reg, pred_prob, gt_prob, area_mask,
                   l_rotate=None, g_rotate=None, resolution=None, voxel_shape=None,
                   x_range=None, y_range=None, z_range=None, t=35, thres_t=None,
                   anchor_size=(1.56, 1.6, 3.9), anchor_center=(-1.0, 0., 0.),
                   fliplr=False, n_class=20, scale_label=1, thres_p=0.998,
                   **kwargs):
-        """
-           gt_prob: shape is (Batch, H, W)
-           gt_reg: shape is (Batch, 7, H, W)
-           pred_prob: shape is (Batch, 1, H, W)
-           pred_reg: shape is (Batch, 7, H, W)
-        """
         d, h, w = voxel_shape
         d_res, h_res, w_res = resolution
         x_min, x_max = x_range
@@ -207,33 +178,16 @@ class BasicModel(chainer.Chain):
         # y_array = F.broadcast_to(self.xp.arange(0, y_max - y_min, h_res*scale_label)[self.xp.newaxis, :, self.xp.newaxis], (batch, h, w))
         # anchor[:, :, :, 0] = x_array.data
         # anchor[:, :, :, 1] = y_array.data
-
         # thres = F.sigmoid(pred_prob).data > thres_p
         # img = np.zeros((h, w, 3), dtype="f")
         # thres_cpu = chainer.cuda.to_cpu(thres)
         # # print(thres.shape, thres_cpu.shape)
         # img[thres_cpu[0]] = 1
-        #
         # img = img * chainer.cuda.to_cpu(area_mask.transpose(1, 2, 0))
-
         # fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10, 3))
         # ax1.imshow(img)
         # ax2.imshow(chainer.cuda.to_cpu(gt_prob.astype("f")[0]))
         # plt.show()
-        # pred_center_x = pred_reg[thres][:, 0] * anchor_l + anchor[thres][:, 0]
-        # pred_center_y = pred_reg[:, :, :, 1] * anchor_w + anchor[:, :, :, 1]
-        # pred_length = self.xp.exp(pred_reg[:, :, :,  3]) * anchor_l
-        # pred_width = self.xp.exp(pred_reg[:, :, :,  4]) * anchor_w
-        # pred_rotate = pred_reg[:, :, :, 6] * 3.14160
-        #
-        # gt_center_x = gt_reg[:, :, :, 0] * anchor_l + anchor[:, :, :, 0]
-        # gt_center_y = gt_reg[:, :, :, 1] * anchor_w + anchor[:, :, :, 1]
-        # gt_length = self.xp.exp(gt_reg[:, :, :, 3]) * anchor_l
-        # gt_width = self.xp.exp(gt_reg[:, :, :, 4]) * anchor_w
-        # gt_rotate = gt_reg[:, :, :, 6] * 3.14160
-        #
-        # true_prob = self.xp.mean(F.sigmoid(pred_prob[gt_prob]).data)
-        # false_prob = 1 - self.xp.mean(F.sigmoid(pred_prob[~gt_prob]).data)
 
         anchor = self.xp.zeros((batch, h, w, 3), dtype="f")
         x_array = F.broadcast_to(self.xp.arange(0, x_max - x_min, w_res*scale_label), (batch, h, w))
@@ -251,7 +205,7 @@ class BasicModel(chainer.Chain):
         candidate = chainer.cuda.to_cpu(candidate)
         anchor = chainer.cuda.to_cpu(anchor)
         anchor = anchor[0][candidate]
-        gt_reg = self.decoder(gt_reg, anchor, anchor_size, xp=np)
+        gt_reg = self.decoder(gt_reg, anchor, anchor_size, xp=np, res=0.8)
         sort_index = np.argsort(gt_prob)[::-1]
         gt_reg = gt_reg[sort_index]
         gt_prob = gt_prob[sort_index]
@@ -290,8 +244,8 @@ class BasicModel(chainer.Chain):
             print("## Sum of execution time: ", sum_time)
             # self.viz_input(y)
             if config is not None:
-                print("#####   Visualize   #####")
-                self.visualize(pred_reg, gt_reg, pred_prob, gt_prob, area_mask,
+                print("#####   debug   #####")
+                self.debug(pred_reg, gt_reg, pred_prob, gt_prob, area_mask,
                                **config)
 
 
