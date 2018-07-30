@@ -88,7 +88,7 @@ def _transform(inputs, crop_size=(512, 512), g_scale=[0.95, 1.05],
 
     # bird_corners = get_bird_boxcorners(places, rotates, size)
 
-    label_creator = create_label_rotate if label_rotate else create_label
+    label_creator = create_label_rotate #if label_rotate else create_label
     gt_obj, gt_reg, gt_obj_for_reg = \
         label_creator(places, rotates, size, d_res, h_res, w_res, t, d, h, w,
                       x_min, x_max, y_min, y_max, z_min, z_max, thres_t,

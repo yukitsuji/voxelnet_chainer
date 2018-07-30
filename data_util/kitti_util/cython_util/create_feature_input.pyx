@@ -380,9 +380,14 @@ def create_label_rotate(
                 gt_obj_for_reg[y_label_a, x_label_b] = surround_prob
                 anchor_x_b = anchor_x + j * W_res_scale
                 anchor_y_a = anchor_y + i * H_res_scale
+                gt_reg[0, y_label_a, x_label_b] = (x - anchor_x_b) / (W_res_scale * 2)
+                gt_reg[1, y_label_a, x_label_b] = (y - anchor_y_a) / (W_res_scale * 2)
+                gt_reg[2, y_label_a, x_label_b] = (z - anchor_z) / anchor_h
+                """
                 gt_reg[0, y_label_a, x_label_b] = (x - anchor_x_b) / anchor_l
                 gt_reg[1, y_label_a, x_label_b] = (y - anchor_y_a) / anchor_w
                 gt_reg[2, y_label_a, x_label_b] = (z - anchor_z) / anchor_h
+                """
                 gt_reg[3, y_label_a, x_label_b] = log(length / anchor_l)
                 gt_reg[4, y_label_a, x_label_b] = log(width / anchor_w)
                 gt_reg[5, y_label_a, x_label_b] = log(height / anchor_h)
@@ -428,7 +433,7 @@ def create_label(
     cdef int anchor_W = int(W / scale_label)
 
     cdef np.ndarray[DTYPE_int_t, ndim=2] gt_obj = np.zeros((anchor_H, anchor_W), dtype=DTYPE_int)
-    cdef np.ndarray[DTYPE_t, ndim=3] gt_reg = np.zeros((7, anchor_H, anchor_W), dtype=DTYPE)
+    cdef np.ndarray[DTYPE_t, ndim=3] gt_reg = np.zeros((8, anchor_H, anchor_W), dtype=DTYPE)
     cdef np.ndarray[DTYPE_t, ndim=2] gt_obj_for_reg = np.zeros((anchor_H, anchor_W), dtype=DTYPE)
 
     cdef int n, count, c, n_no_empty, i, j, x_label, y_label, a, b
@@ -436,6 +441,7 @@ def create_label(
     cdef int x_label_b, y_label_a
     cdef float anchor_x_b, anchor_y_a
     cdef DTYPE_t x, y, z, reflect
+
     cdef float x_min_1 = x_min + 0.0011
     cdef float y_min_1 = y_min + 0.0011
     cdef float z_min_1 = z_min + 0.0011
@@ -445,6 +451,9 @@ def create_label(
 
     cdef float W_res_scale = W_res * scale_label
     cdef float H_res_scale = H_res * scale_label
+    cdef float pi = float(np.pi)
+    cdef float pi_2 = pi / 2.
+    cdef int pi_true
 
     for n in range(num_labels):
       x = places[n, 0]
@@ -464,8 +473,13 @@ def create_label(
         anchor_y = y_label * H_res_scale + y_min
 
         gt_obj[y_label, x_label] = 1
+        pi_true = 1
         if rotate < 0:
-          rotate = 3.14160 + rotate
+          rotate = pi + rotate
+        if rotate >= pi_2:
+          pi_true = 0
+          rotate = pi - rotate
+
         for i in range(-1, 2):
           for j in range(-1, 2):
             x_label_b = x_label + j
@@ -475,13 +489,14 @@ def create_label(
                 gt_obj_for_reg[y_label_a, x_label_b] = surround_prob
                 anchor_x_b = anchor_x + j * W_res_scale
                 anchor_y_a = anchor_y + i * H_res_scale
-                gt_reg[0, y_label_a, x_label_b] = (x - anchor_x_b) / anchor_l
-                gt_reg[1, y_label_a, x_label_b] = (y - anchor_y_a) / anchor_w
+                gt_reg[0, y_label_a, x_label_b] = (x - anchor_x_b) / (W_res_scale*2)
+                gt_reg[1, y_label_a, x_label_b] = (y - anchor_y_a) / (H_res_scale*2)
                 gt_reg[2, y_label_a, x_label_b] = (z - anchor_z) / anchor_h
                 gt_reg[3, y_label_a, x_label_b] = log(length / anchor_l)
                 gt_reg[4, y_label_a, x_label_b] = log(width / anchor_w)
                 gt_reg[5, y_label_a, x_label_b] = log(height / anchor_h)
-                gt_reg[6, y_label_a, x_label_b] = rotate / 3.14160
+                gt_reg[6, y_label_a, x_label_b] = rotate / pi_2
+                gt_reg[7, y_label_a, x_label_b] = pi_true
         gt_obj_for_reg[y_label, x_label] = 1
     return gt_obj, gt_reg, gt_obj_for_reg
 
