@@ -140,7 +140,7 @@ class BasicModel(chainer.Chain):
             pred_reg = chainer.cuda.to_cpu(pred_reg)
             candidate = chainer.cuda.to_cpu(candidate)
             anchor = anchor[candidate]
-            pred_reg = self.decoder(pred_reg, anchor, anchor_size, xp=np, res=0.8)
+            pred_reg = self.decoder(pred_reg, anchor, anchor_size, xp=np, a_res=0.8)
             sort_index = np.argsort(pred_prob)[::-1]
             pred_reg = pred_reg[sort_index]
             pred_prob = pred_prob[sort_index]
@@ -205,7 +205,7 @@ class BasicModel(chainer.Chain):
         candidate = chainer.cuda.to_cpu(candidate)
         anchor = chainer.cuda.to_cpu(anchor)
         anchor = anchor[0][candidate]
-        gt_reg = self.decoder(gt_reg, anchor, anchor_size, xp=np, res=0.8)
+        gt_reg = self.decoder(gt_reg, anchor, anchor_size, xp=np, a_res=0.8)
         sort_index = np.argsort(gt_prob)[::-1]
         gt_reg = gt_reg[sort_index]
         gt_prob = gt_prob[sort_index]
